@@ -30,10 +30,10 @@ export function Home({ navigate }: { navigate: (path: string) => void }) {
     <main className="page home">
       <header className="hero">
         <div className="hero-suits" aria-hidden="true">
-          <span className="suit-s">♠</span>
-          <span className="suit-h">♥</span>
-          <span className="suit-d">♦</span>
-          <span className="suit-c">♣</span>
+          <span className="suit-s">{'♠\uFE0E'}</span>
+          <span className="suit-h">{'♥\uFE0E'}</span>
+          <span className="suit-d">{'♦\uFE0E'}</span>
+          <span className="suit-c">{'♣\uFE0E'}</span>
         </div>
         <h1>ヘッズアップ・ホールデム</h1>
         <p>リンクを送るだけで、1対1のノーリミットホールデムをトーナメント形式で遊べます。</p>

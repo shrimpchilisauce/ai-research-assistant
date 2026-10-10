@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { clockNow } from '../../engine/clock';
-import { collectedPot, other, totalPot, type PlayerAction, type Seat } from '../../engine/hand';
+import { other, totalPot, type PlayerAction, type Seat } from '../../engine/hand';
 import { effectiveAnte, levelIndexAt, msUntilNextLevel } from '../../engine/settings';
 import type { HandView, MatchView, RoomView } from '../../shared/protocol';
 import { chips, clockText, describeAction, durationText } from '../format';
@@ -204,6 +204,8 @@ function SeatPanel({ seat, you, name, view, m, gameNow }: SeatProps) {
   const evalView = hand?.result?.evals[seat];
   const lastAction = hand?.log.filter((e) => e.seat === seat && e.street === hand.street && e.type !== 'ante').at(-1);
   const turn = m.turn?.seat === seat && !m.pause ? m.turn : null;
+  // タイムバンクを使っている最中は、残りを減らしながら表示する
+  const timebankLeft = turn && gameNow > turn.baseDeadline ? Math.max(0, turn.deadline - gameNow) : m.timebankMs[seat];
   const busted = view.phase === 'finished' && m.finished?.winner !== seat;
 
   return (
@@ -218,7 +220,7 @@ function SeatPanel({ seat, you, name, view, m, gameNow }: SeatProps) {
         <div className="seat-stack">
           <span className={`stack ${busted ? 'muted' : ''}`}>{chips(stack)}</span>
           <span className="timebank muted small" title="タイムバンク">
-            ⏱ {Math.ceil(m.timebankMs[seat] / 1_000)}秒
+            ⏱ {Math.ceil(timebankLeft / 1_000)}秒
           </span>
         </div>
         {turn && <TurnTimer turn={turn} gameNow={gameNow} actionMs={view.settings.actionSeconds * 1_000} timebankMs={m.timebankMs[seat]} />}
@@ -287,8 +289,7 @@ function Board({ hand, names, you }: { hand: HandView | null; names: [string, st
       <div className="pot">
         {hand ? (
           <>
-            <span className="muted small">ポット</span> <strong>{chips(r ? r.pot : collectedPot(hand))}</strong>
-            {!r && totalPot(hand) !== collectedPot(hand) && <span className="muted small">（合計 {chips(totalPot(hand))}）</span>}
+            <span className="muted small">ポット</span> <strong>{chips(r ? r.pot : totalPot(hand))}</strong>
           </>
         ) : (
           <span className="muted">配っています…</span>

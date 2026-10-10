@@ -1006,8 +1006,9 @@ select:disabled {
   backdrop-filter: blur(2px);
 }
 
+/* ヘッダー（レベル表示・メニュー）は一時停止中も見えるようにする */
 .overlay.pause {
-  top: 56px;
+  z-index: 4;
 }
 
 .overlay .panel {

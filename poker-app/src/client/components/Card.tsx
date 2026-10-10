@@ -1,6 +1,7 @@
 import type { Card as CardCode } from '../../engine/cards';
 
-const SUIT_SYMBOL: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
+// U+FE0E で絵文字ではなく文字として表示させる
+const SUIT_SYMBOL: Record<string, string> = { s: '♠\uFE0E', h: '♥\uFE0E', d: '♦\uFE0E', c: '♣\uFE0E' };
 const SUIT_NAME: Record<string, string> = { s: 'スペード', h: 'ハート', d: 'ダイヤ', c: 'クラブ' };
 
 export function rankLabel(code: CardCode) {

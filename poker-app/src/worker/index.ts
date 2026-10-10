@@ -86,7 +86,7 @@ export class PokerRoom extends DurableObject<Env> {
   async create(roomId: string, name: unknown) {
     if (this.core) return { ok: false as const, code: 'exists', message: '' };
     try {
-      const { core, token } = RoomCore.create(roomId, String(name ?? ''), Date.now(), deps);
+      const { core, token } = RoomCore.create(roomId, typeof name === 'string' ? name : '', Date.now(), deps);
       this.core = core;
       await this.commit();
       return { ok: true as const, token };
