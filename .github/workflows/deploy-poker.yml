@@ -1,0 +1,63 @@
+name: Deploy poker app
+
+# poker-app を Cloudflare Workers にデプロイし、公開先で動作確認する。
+# リポジトリの Secrets に CLOUDFLARE_API_TOKEN と CLOUDFLARE_ACCOUNT_ID が必要。
+on:
+  push:
+    branches: [main, claude/texas-holdem-poker-app-twk602]
+    paths: ['poker-app/**', '.github/workflows/deploy-poker.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-poker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: poker-app
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: poker-app/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+      - name: Check Cloudflare secrets
+        id: secrets
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID が未設定のため、デプロイを省略しました"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy
+        id: deploy
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          npx vite build
+          npx wrangler deploy 2>&1 | tee deploy.log
+          url=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' deploy.log | head -1)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### 公開URL: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke test on the deployed app
+        if: steps.deploy.outputs.url != ''
+        run: |
+          url='${{ steps.deploy.outputs.url }}'
+          # 反映まで少し時間がかかることがある
+          for i in 1 2 3 4 5 6; do curl -fsS "$url/" -o /dev/null && break; sleep 10; done
+          node scripts/smoke.mjs "$url"
